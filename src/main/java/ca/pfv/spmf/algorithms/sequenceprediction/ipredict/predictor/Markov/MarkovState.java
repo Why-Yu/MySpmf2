@@ -1,0 +1,118 @@
+package ca.pfv.spmf.algorithms.sequenceprediction.ipredict.predictor.Markov;
+
+import cn.whyyu.myspmf.Result;
+
+import java.io.Serializable;
+import java.util.*;
+import java.util.Map.Entry;
+/*
+ * This file is copyright (c) Ted Gueniche 
+ * <ted.gueniche@gmail.com>
+ *
+ * This file is part of the IPredict project
+ * (https://github.com/tedgueniche/IPredict).
+ *
+ * IPredict is distributed under The MIT License (MIT).
+ * You may obtain a copy of the License at
+ * https://opensource.org/licenses/MIT 
+ */
+public class MarkovState implements Serializable{
+
+	/**
+	 * Number of transitions for this state
+	 */
+	private Integer count;
+	
+	/**
+	 * Hashmap of each transition and their respective support
+	 */
+	private HashMap<Integer, Integer> transitions; //outgoing states and their count
+	
+	
+	public MarkovState() {
+		count = 0;
+		transitions = new HashMap<Integer, Integer>();
+	}
+	
+	/**
+	 * Returns the number of transition for this state - not the support
+	 */
+	public int getTransitionCount() {
+		return count;
+	}
+	
+	/**
+	 * Adds or update a transition from this state
+	 * @param val Value of the new state
+	 */
+	public void addTransition(Integer val) {
+		
+		//Getting the current value or creating it
+		Integer support = transitions.get(val);
+		if(support == null) {
+			support = 0;
+			count += 1;
+		}
+		
+		//updating value
+		support++;
+		
+		//pushing value back to the transitions map
+		transitions.put(val, support);
+		
+	}
+	
+	
+	public Integer getBestNextState() {
+		Integer highestCount = 0;
+		Integer highestValue = null;
+		
+		Iterator<Entry<Integer, Integer>> it = transitions.entrySet().iterator();
+		while(it.hasNext()) {
+			
+			Entry<Integer, Integer> pairs = it.next();
+			
+			if((pairs.getValue()) > highestCount) {
+				highestCount = (pairs.getValue());
+				highestValue = (pairs.getKey());
+			}
+			
+		}
+		
+		return highestValue;
+	}
+
+	public Set<Integer> getTopNextState() {
+		List<Result> scoreList = new ArrayList<>();
+		for(Map.Entry<Integer,Integer> entry : transitions.entrySet()){
+			scoreList.add(new Result(entry.getKey(), entry.getValue()));
+		}
+		scoreList.sort(Collections.reverseOrder());
+		List<Result> topList;
+		if (scoreList.size() > 5) {
+			topList = scoreList.subList(0,5);
+		} else {
+			topList = scoreList;
+		}
+		Set<Integer> predictSet = new HashSet<>();
+		for (Result result : topList) {
+			predictSet.add(result.getKey());
+		}
+		return predictSet;
+	}
+	
+	
+	public String toString() {
+		String output = "";
+		Iterator<Entry<Integer, Integer>> it = transitions.entrySet().iterator();
+		while(it.hasNext()) {
+			Entry<Integer, Integer> pairs = it.next();
+			output += pairs.getKey() + "("+ pairs.getValue() + ") ";
+		}
+		return output;
+	}
+	
+}
+
+
+
